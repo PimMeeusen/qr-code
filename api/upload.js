@@ -5,9 +5,9 @@ export const config = {
   api: { bodyParser: false }
 };
 
-// ✅ CORS headers
+// 🔓 CORS – tijdelijk volledig open (voor testen)
 function setCors(res) {
-  res.setHeader("Access-Control-Allow-Origin", "https://pimmeeusen.github.io");
+  res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, x-upload-token");
 }
@@ -15,6 +15,7 @@ function setCors(res) {
 function parseMultipart(req) {
   return new Promise((resolve, reject) => {
     const bb = Busboy({ headers: req.headers });
+
     let fileBuffer = null;
     let fileName = "photo.jpg";
     let mimeType = "image/jpeg";
@@ -23,6 +24,7 @@ function parseMultipart(req) {
     bb.on("file", (_name, file, info) => {
       fileName = info.filename || fileName;
       mimeType = info.mimeType || mimeType;
+
       const chunks = [];
       file.on("data", d => chunks.push(d));
       file.on("end", () => {
@@ -56,17 +58,20 @@ function getDriveClient() {
 }
 
 export default async function handler(req, res) {
-  // ✅ CORS preflight
+  // ✅ CORS headers ALTIJD eerst
   setCors(res);
+
+  // ✅ PRE-FLIGHT (NOOIT beveiligen)
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
 
+  // ❌ Alleen POST toestaan
   if (req.method !== "POST") {
     return res.status(405).send("Method Not Allowed");
   }
 
-  // 🔐 Token check
+  // 🔐 PAS NU token checken
   const token = req.headers["x-upload-token"];
   if (process.env.UPLOAD_TOKEN && token !== process.env.UPLOAD_TOKEN) {
     return res.status(401).send("Unauthorized");
@@ -81,6 +86,7 @@ export default async function handler(req, res) {
     }
 
     const drive = getDriveClient();
+
     const qrId = (fields.qrId || "qr").replace(/[^a-zA-Z0-9_-]/g, "");
     const finalName = `${qrId}_${Date.now()}_${fileName}`;
 
