@@ -5,13 +5,6 @@ export const config = {
   api: { bodyParser: false }
 };
 
-// 🔓 CORS – tijdelijk volledig open (voor testen)
-function setCors(res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, x-upload-token");
-}
-
 function parseMultipart(req) {
   return new Promise((resolve, reject) => {
     const bb = Busboy({ headers: req.headers });
@@ -41,6 +34,7 @@ function parseMultipart(req) {
     });
 
     bb.on("error", reject);
+
     req.pipe(bb);
   });
 }
@@ -58,20 +52,12 @@ function getDriveClient() {
 }
 
 export default async function handler(req, res) {
-  // ✅ CORS headers ALTIJD eerst
-  setCors(res);
-
-  // ✅ PRE-FLIGHT (NOOIT beveiligen)
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
-
-  // ❌ Alleen POST toestaan
+  // Alleen POST toestaan
   if (req.method !== "POST") {
     return res.status(405).send("Method Not Allowed");
   }
 
-  // 🔐 PAS NU token checken
+  // 🔐 Token check
   const token = req.headers["x-upload-token"];
   if (process.env.UPLOAD_TOKEN && token !== process.env.UPLOAD_TOKEN) {
     return res.status(401).send("Unauthorized");
