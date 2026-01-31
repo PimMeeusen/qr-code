@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Maak een foto</title>
+</head>
+
+<body style="font-family: sans-serif; padding: 20px">
+
+  <h2>Maak een foto</h2>
+
+  <input
+    id="cameraInput"
+    type="file"
+    accept="image/*"
+    capture="environment"
+  />
+
+  <p id="status"></p>
+
+  <script>
+    // ✅ Zelfde domein (Vercel) → GEEN CORS
+    const UPLOAD_URL = "/api/upload";
+
+    // 🔐 Moet exact gelijk zijn aan Vercel env var
+    const UPLOAD_TOKEN = "maak-iets-geheims-zoals-dit-123";
+
+    // Optioneel: QR-id (?id=locatie1)
+    const qrId =
+      new URLSearchParams(window.location.search).get("id") || "qr";
+
+    const input = document.getElementById("cameraInput");
+    const statusEl = document.getElementById("status");
+
+    input.addEventListener("change", async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+
+      statusEl.textContent = "Uploaden…";
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("qrId", qrId);
+
+      try {
+        const res = await fetch(UPLOAD_URL, {
+          method: "POST",
+          headers: {
+            "x-upload-token": UPLOAD_TOKEN
+          },
+          body: formData
+        });
+
+        if (!res.ok) {
+          throw new Error("Upload failed");
+        }
+
+        statusEl.textContent = "✅ Foto geüpload!";
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = "❌ Upload mislukt.";
+      }
+    });
+  </script>
+
+</body>
+</html>
