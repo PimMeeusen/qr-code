@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Maak een foto</title>
 </head>
-<body style="font-family: sans-serif; padding: 20px">
+<body style="font-family:sans-serif;padding:20px">
 
   <h2>Maak een foto</h2>
 
@@ -19,12 +19,10 @@
   <p id="status"></p>
 
   <script>
-    // 🔧 BACKEND CONFIG
-    const UPLOAD_URL =
-      "https://qr-code-luyqfi8iv-pimmeeusens-projects.vercel.app/api/upload";
+    // ✅ ZELFDE ORIGIN → GEEN CORS
+    const UPLOAD_URL = "/api/upload";
     const UPLOAD_TOKEN = "maak-iets-geheims-zoals-dit-123";
 
-    // Optioneel: QR-id uit de URL (?id=locatie1)
     const qrId =
       new URLSearchParams(window.location.search).get("id") || "qr";
 
@@ -42,7 +40,7 @@
       formData.append("qrId", qrId);
 
       try {
-        const response = await fetch(UPLOAD_URL, {
+        const res = await fetch(UPLOAD_URL, {
           method: "POST",
           headers: {
             "x-upload-token": UPLOAD_TOKEN
@@ -50,9 +48,7 @@
           body: formData
         });
 
-        if (!response.ok) {
-          throw new Error("Upload failed");
-        }
+        if (!res.ok) throw new Error("Upload failed");
 
         statusEl.textContent = "✅ Foto geüpload!";
       } catch (err) {
