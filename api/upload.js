@@ -5,6 +5,13 @@ export const config = {
   api: { bodyParser: false }
 };
 
+// ✅ CORS headers
+function setCors(res) {
+  res.setHeader("Access-Control-Allow-Origin", "https://pimmeeusen.github.io");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, x-upload-token");
+}
+
 function parseMultipart(req) {
   return new Promise((resolve, reject) => {
     const bb = Busboy({ headers: req.headers });
@@ -17,7 +24,7 @@ function parseMultipart(req) {
       fileName = info.filename || fileName;
       mimeType = info.mimeType || mimeType;
       const chunks = [];
-      file.on("data", (d) => chunks.push(d));
+      file.on("data", d => chunks.push(d));
       file.on("end", () => {
         fileBuffer = Buffer.concat(chunks);
       });
@@ -32,7 +39,6 @@ function parseMultipart(req) {
     });
 
     bb.on("error", reject);
-
     req.pipe(bb);
   });
 }
@@ -50,11 +56,17 @@ function getDriveClient() {
 }
 
 export default async function handler(req, res) {
+  // ✅ CORS preflight
+  setCors(res);
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
   if (req.method !== "POST") {
     return res.status(405).send("Method Not Allowed");
   }
 
-  // eenvoudige beveiliging
+  // 🔐 Token check
   const token = req.headers["x-upload-token"];
   if (process.env.UPLOAD_TOKEN && token !== process.env.UPLOAD_TOKEN) {
     return res.status(401).send("Unauthorized");
@@ -69,7 +81,6 @@ export default async function handler(req, res) {
     }
 
     const drive = getDriveClient();
-
     const qrId = (fields.qrId || "qr").replace(/[^a-zA-Z0-9_-]/g, "");
     const finalName = `${qrId}_${Date.now()}_${fileName}`;
 
@@ -84,7 +95,7 @@ export default async function handler(req, res) {
       }
     });
 
-    res.status(200).json({ ok: true, filename: finalName });
+    res.status(200).json({ ok: true });
   } catch (err) {
     console.error(err);
     res.status(500).send("Upload failed");
