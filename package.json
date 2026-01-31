@@ -1,0 +1,9 @@
+{
+  "name": "qr-photo-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "busboy": "^1.6.0",
+    "googleapis": "^140.0.0"
+  }
+}
